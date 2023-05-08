@@ -19,10 +19,10 @@ class Process(MessageServiceServicer):
         self.successor = None
         self.data = {}
         self.delay = 0
+        self.completed_operations = []
 
     def GetMessage(self, request, context):
         message = json.loads(request.text)
-        print(self.name, message)
         command = message['command']
         if command == 'assign':
             data = message['data']
@@ -33,6 +33,7 @@ class Process(MessageServiceServicer):
             response_text = json.dumps({'success': True})
 
         elif command == 'write_operation':
+            print(self.name, message)
             time.sleep(self.delay)
             name = message['data']['name']
             price = message['data']['price']
@@ -41,27 +42,41 @@ class Process(MessageServiceServicer):
             response_text = self._send_message_successor(message)
             response_json = json.loads(response_text)
             if response_json.get('data').get('success'):
+                self.completed_operations.append(response_json)
                 self.data[name] = (price, "clean")
             else:
                 del self.data[name]
+
         elif command == 'list_books':
             text = ''
             for book in self.data:
                 text += f"{book} = {self.data[book][0]}EUR\n"
             response_text = json.dumps({'status': 'success', 'data': text})
+
         elif command == 'read_operation':
             name = message['data']['name']
-
             price, _ = self.data.get(name, (False, False))
             if price:
                 text = f"{name} {price} EUR"
             else:
                 text = "Not yet in the stock"
             response_text = json.dumps({'status': 'success', 'data': text})
+
         elif command == 'set_delay':
             self.delay = message['data']['delay']
             self._send_message_successor(message)
             response_text = json.dumps({'data': 'success'})
+
+        elif command == 'get_completed_operations':
+            response_text = json.dumps({'data': self.completed_operations})
+
+        elif command == 'get_data':
+            response_text = json.dumps({'data': self.data})
+
+        elif command == 'set_data':
+            self.data = message['data']
+            response_text = json.dumps({'success': True})
+
         else:
             response_text = json.dumps({'success': True})
 

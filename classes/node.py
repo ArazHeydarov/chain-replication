@@ -68,6 +68,9 @@ class Node:
         elif 'Remove-head' == command:
             self._send_command_to_master(command='remove_head')
 
+        elif 'Restore-head' == command:
+            self._send_command_to_master(command='restore_head')
+
         elif command in ['exit', 'quit']:
             sys.exit(0)
 

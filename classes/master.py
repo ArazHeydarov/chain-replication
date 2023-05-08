@@ -49,7 +49,7 @@ class Master(MessageServiceServicer):
                 if not self.chain_created:
                     raise Exception("Chain hasn't been created yet. Please create it first with 'Create-chain'")
                 message = f"{self.head['name']}(Head)"
-                for i in range(1, len(self.chain)-1):
+                for i in range(1, len(self.chain) - 1):
                     message += f" -> {self.chain[i]['name']} -> "
                 message += f"{self.tail['name']}(Tail)"
 
@@ -72,6 +72,9 @@ class Master(MessageServiceServicer):
                                                    "successor": self.chain[1]
                                                }
                                            })
+
+            elif command == 'restore_head':
+                self._restore_head()
 
             else:
                 raise Exception("No such command is found in master")
@@ -143,10 +146,39 @@ class Master(MessageServiceServicer):
                                        message={
                                            "command": "assign",
                                            "data": {
-                                               "predecessor": self.chain[i-1],
-                                               "successor": self.chain[i+1]
+                                               "predecessor": self.chain[i - 1],
+                                               "successor": self.chain[i + 1]
                                            }
                                        })
+
+    def _restore_head(self):
+        head_to_restore = self.removed_heads.pop()
+        current_head = self.head
+
+        response_restore = self._send_message_process(head_to_restore['port'],
+                                                      {'command': 'get_completed_operations'}).text
+        response_current = self._send_message_process(current_head['port'],
+                                                      {'command': 'get_completed_operations'}).text
+
+        order_deviation = len(json.loads(response_current)['data']) - len(json.loads(response_restore)['data'])
+        print("Order of deviation", order_deviation)
+        if order_deviation > 5:
+            pass
+        else:
+            self.head = head_to_restore
+            self.chain = [head_to_restore] + self.chain
+            # Restoring the head
+            self._send_message_process(current_head['port'], message={
+                                           "command": "assign",
+                                           "data": {
+                                               "predecessor": self.chain[0],
+                                               "successor": self.chain[2]
+                                           }
+                                       })
+            recent_head_data = json.loads(self._send_message_process(current_head['port'],
+                                                                     message={"command": 'get_data'}).text)['data']
+            self._send_message_process(self.head['port'],
+                                       message={"command": 'set_data', 'data': recent_head_data})
 
     @staticmethod
     def _send_message_process(port, message: dict):
