@@ -1,4 +1,6 @@
 import subprocess
+import sys
+
 import grpc
 import json
 from chain_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server, MessageServiceStub
@@ -29,6 +31,8 @@ class Node:
             self._send_command_to_master(command='list_processes')
         elif command == 'check_alive_all_processes':
             self._send_command_to_master(command=command)
+        elif command in ['exit', 'quit']:
+            sys.exit(0)
 
     def _create_process(self, number_of_process: int) -> None:
         for i in range(number_of_process):
