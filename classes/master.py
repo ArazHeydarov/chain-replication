@@ -24,18 +24,32 @@ class Master(MessageServiceServicer):
             command = message['command']
             if command == 'register_process':
                 self.process.append(message['data'])
+
             elif command == 'list_processes':
                 print(self.process)
+
             elif command == 'check_alive_all_processes':
                 self._check_process()
+
             elif 'remove_node' in command:
                 cmd, node_name = message['command'].split()
                 self.process = [ps for ps in self.process if node_name not in ps['name']]
+
             elif command == 'create_chain':
                 if self.chain_created:
                     raise Exception("Chain has already been created")
                 else:
                     self._create_chain()
+
+            elif command == 'list_chain':
+                if not self.chain_created:
+                    raise Exception("Chain hasn't been created yet. Please create it first with 'Create-chain'")
+                message = f"{self.head['name']}(Head)"
+                for i in range(1, len(self.chain)-1):
+                    message += f" -> {self.chain[i]['name']} -> "
+                message += f"{self.tail['name']}(Tail)"
+            else:
+                raise Exception("No such command is found in master")
         except Exception as e:
             command = request.text
             status = 'failure'

@@ -19,7 +19,7 @@ class Process(MessageServiceServicer):
     def GetMessage(self, request, context):
         message = json.loads(request.text)
         command = message['command']
-        print(self.name, message)
+        # print(self.name, message)
         return Message(text="received")
 
     def start_server(self):
@@ -53,5 +53,5 @@ class Process(MessageServiceServicer):
         add_MessageServiceServicer_to_server(self, server)
         server.add_insecure_port(f'[::]:{self.port}')
         server.start()
-        print(f'Server started on port {self.port}...')
+        # print(f'Server started on port {self.port}...')
         server.wait_for_termination()

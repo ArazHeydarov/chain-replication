@@ -33,10 +33,13 @@ class Node:
             self._send_command_to_master(command=command)
         elif command == 'Create-chain':
             self._send_command_to_master(command="create_chain")
+        elif command == 'List-chain':
+            response = self._send_command_to_master(command="list_chain")
+            print(response['message'])
         elif command in ['exit', 'quit']:
             sys.exit(0)
         else:
-            print("No such command is found")
+            print("No such command is found in node")
 
     def _create_process(self, number_of_process: int) -> None:
         for i in range(number_of_process):
@@ -58,7 +61,8 @@ class Node:
         if response['status'] == 'failure':
             print("Message from server:", response['message'])
         else:
-            print("Success")
+            pass
+            # print("Success")
         return response
 
     def __del__(self):
