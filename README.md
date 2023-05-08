@@ -34,4 +34,12 @@ master, nodes, processes.
 
 List of tasks:
 
-Local-store-ps :white_check_mark:
+Local-store-ps {number_of_processes} :white_check_mark: <br>
+Create-chain :white_check_mark:<br>
+List-chain :white_check_mark:<br>
+Write-operation <“Book”, Price>:   :white_check_mark: (P.s write operation expects the exact same formatting)<br>
+List-books: :white_check_mark:<br>
+Read-operation:  :white_check_mark:<br>
+Time-out: :white_check_mark: (P.s even though the command is still Time-out, 'delay' is more suitable name)<br>
+Remove-head: :white_check_mark:<br>
+Restore-head: :white_check_mark:<br>
