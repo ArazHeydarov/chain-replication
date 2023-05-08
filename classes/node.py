@@ -31,8 +31,12 @@ class Node:
             self._send_command_to_master(command='list_processes')
         elif command == 'check_alive_all_processes':
             self._send_command_to_master(command=command)
+        elif command == 'Create-chain':
+            self._send_command_to_master(command="create_chain")
         elif command in ['exit', 'quit']:
             sys.exit(0)
+        else:
+            print("No such command is found")
 
     def _create_process(self, number_of_process: int) -> None:
         for i in range(number_of_process):
@@ -50,6 +54,12 @@ class Node:
             "command": command,
         }))
         response = self.master_stub.GetMessage(request)
+        response = json.loads(response.text)
+        if response['status'] == 'failure':
+            print("Message from server:", response['message'])
+        else:
+            print("Success")
+        return response
 
     def __del__(self):
         self._kill_all_process()

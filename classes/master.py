@@ -11,23 +11,34 @@ class Master(MessageServiceServicer):
         self.id = uuid.uuid4().hex
         self.port = 8000
         self.process = []
+        self.chain = []
+        self.chain_created = False
 
     def GetMessage(self, request, context):
         try:
+            status = 'success'
             message = json.loads(request.text)
-            print(message)
-            if message['command'] == 'register_process':
+            command = message['command']
+            if command == 'register_process':
                 self.process.append(message['data'])
-            elif message['command'] == 'list_processes':
+            elif command == 'list_processes':
                 print(self.process)
-            elif message['command'] == 'check_alive_all_processes':
+            elif command == 'check_alive_all_processes':
                 self._check_process()
-            elif 'remove_node' in message['command']:
+            elif 'remove_node' in command:
                 cmd, node_name = message['command'].split()
                 self.process = [ps for ps in self.process if node_name not in ps['name']]
+            elif command == 'create_chain':
+                if self.chain_created:
+                    raise Exception("Chain has already been created")
+                else:
+                    self.chain_created = True
         except Exception as e:
-            print(f"Message received with error {request.text} with {e}")
-        return Message(text="received")
+            command = request.text
+            status = 'failure'
+            message = f"Message received with error {request.text} with {e}"
+            print(message)
+        return Message(text=json.dumps({"command": command, 'status': status, 'message': message}))
 
     def _check_process(self):
         for ps in self.process:
