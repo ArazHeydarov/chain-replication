@@ -1,3 +1,4 @@
+import random
 import uuid
 import grpc
 import json
@@ -13,6 +14,8 @@ class Master(MessageServiceServicer):
         self.process = []
         self.chain = []
         self.chain_created = False
+        self.head = None
+        self.tail = None
 
     def GetMessage(self, request, context):
         try:
@@ -32,7 +35,7 @@ class Master(MessageServiceServicer):
                 if self.chain_created:
                     raise Exception("Chain has already been created")
                 else:
-                    self.chain_created = True
+                    self._create_chain()
         except Exception as e:
             command = request.text
             status = 'failure'
@@ -58,3 +61,46 @@ class Master(MessageServiceServicer):
         server.start()
         print(f'Server started on port {self.port}...')
         server.wait_for_termination()
+
+    def _create_chain(self):
+        self.chain = random.sample(self.process, len(self.process))
+        print("Chain", self.chain)
+        self.head = self.chain[0]
+        self.tail = self.chain[-1]
+        # Assign head
+        self._send_message_process(port=self.head['port'],
+                                   message={
+                                       "command": "assign",
+                                       "data": {
+                                           "head": True,
+                                           "successor": self.chain[1]
+                                       }
+                                   })
+        # Assign tail
+        self._send_message_process(port=self.tail['port'],
+                                   message={
+                                       "command": "assign",
+                                       "data": {
+                                           "tail": True,
+                                           "predecessor": self.chain[-2]
+                                       }
+                                   })
+        # Assign middle processes
+        for i in range(1, len(self.chain) - 1):
+            self._send_message_process(self.chain[i]['port'],
+                                       message={
+                                           "command": "assign",
+                                           "data": {
+                                               "predecessor": self.chain[i-1],
+                                               "successor": self.chain[i+1]
+                                           }
+                                       })
+
+    @staticmethod
+    def _send_message_process(port, message: dict):
+        json_message = json.dumps(message)
+        with grpc.insecure_channel(f'localhost:{port}') as channel:
+            stub = MessageServiceStub(channel)
+            request = Message(text=json_message)
+            response = stub.GetMessage(request)
+            channel.close()

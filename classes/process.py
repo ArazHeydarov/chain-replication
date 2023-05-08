@@ -11,9 +11,15 @@ class Process(MessageServiceServicer):
         self.name = name
         self.master_port = 8000
         self.port = None
+        self.head = None
+        self.tail = None
+        self.predecessor = None
+        self.successor = None
 
     def GetMessage(self, request, context):
-        print(f"Message received {request.text}")
+        message = json.loads(request.text)
+        command = message['command']
+        print(self.name, message)
         return Message(text="received")
 
     def start_server(self):
