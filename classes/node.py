@@ -65,6 +65,9 @@ class Node:
             _, delay = command.split()
             self._send_command_to_master(command='set_delay', data={'delay': int(delay)})
 
+        elif 'Remove-head' == command:
+            self._send_command_to_master(command='remove_head')
+
         elif command in ['exit', 'quit']:
             sys.exit(0)
 

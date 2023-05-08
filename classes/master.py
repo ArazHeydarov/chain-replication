@@ -19,6 +19,7 @@ class Master(MessageServiceServicer):
         self.tail = None
         self.operations = []
         self.completed_operations = {}
+        self.removed_heads = []
 
     def GetMessage(self, request, context):
         try:
@@ -59,6 +60,18 @@ class Master(MessageServiceServicer):
                 while operation_id not in self.completed_operations:
                     time.sleep(0.5)
                 message = self.completed_operations[operation_id]
+
+            elif command == 'remove_head':
+                self.removed_heads.append(self.chain.pop(0))
+                self.head = self.chain[0]
+                self._send_message_process(port=self.head['port'],
+                                           message={
+                                               "command": "assign",
+                                               "data": {
+                                                   "head": True,
+                                                   "successor": self.chain[1]
+                                               }
+                                           })
 
             else:
                 raise Exception("No such command is found in master")
