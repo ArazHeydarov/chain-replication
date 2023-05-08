@@ -51,7 +51,7 @@ class Master(MessageServiceServicer):
                 message = f"{self.head['name']}(Head)"
                 for i in range(1, len(self.chain) - 1):
                     message += f" -> {self.chain[i]['name']}"
-                message += f"{self.tail['name']}(Tail)"
+                message += f"->{self.tail['name']}(Tail)"
 
             elif command in ['write_operation', 'read_operation', 'list_books', 'set_delay']:
                 operation_id = uuid.uuid4().hex
