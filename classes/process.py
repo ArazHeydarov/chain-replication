@@ -40,6 +40,11 @@ class Process(MessageServiceServicer):
                 self.data[name] = (price, "clean")
             else:
                 del self.data[name]
+        elif command == 'list_books':
+            text = ''
+            for book in self.data:
+                text += f"{book} = {self.data[book][0]}EUR\n"
+            response_text = json.dumps({'status': 'success', 'data': text})
         else:
             response_text = json.dumps({'success': True})
 

@@ -53,6 +53,10 @@ class Master(MessageServiceServicer):
 
             elif command in ['write_operation', 'read_operation']:
                 self.operations.append(message)
+
+            elif command == 'list_books':
+                response = self._send_message_process(self.tail['port'], message)
+                message = json.loads(response.text)['data']
             else:
                 raise Exception("No such command is found in master")
         except Exception as e:
@@ -131,3 +135,4 @@ class Master(MessageServiceServicer):
             request = Message(text=json_message)
             response = stub.GetMessage(request)
             channel.close()
+        return response

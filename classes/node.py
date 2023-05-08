@@ -51,6 +51,10 @@ class Node:
             self._send_command_to_master(command='write_operation',
                                          data={"name": name, "price": price})
 
+        elif command == 'List-books':
+            response = self._send_command_to_master(command='list_books')
+            print(response['message'])
+
         elif command in ['exit', 'quit']:
             sys.exit(0)
 
