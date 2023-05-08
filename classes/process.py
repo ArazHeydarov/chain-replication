@@ -36,7 +36,7 @@ class Process(MessageServiceServicer):
 
             response_text = self._send_message_successor(message)
             response_json = json.loads(response_text)
-            if response_json.get('success'):
+            if response_json.get('data').get('success'):
                 self.data[name] = (price, "clean")
             else:
                 del self.data[name]
@@ -45,6 +45,15 @@ class Process(MessageServiceServicer):
             for book in self.data:
                 text += f"{book} = {self.data[book][0]}EUR\n"
             response_text = json.dumps({'status': 'success', 'data': text})
+        elif command == 'read_operation':
+            name = message['data']['name']
+
+            price, _ = self.data.get(name, (False, False))
+            if price:
+                text = f"{name} {price} EUR"
+            else:
+                text = "Not yet in the stock"
+            response_text = json.dumps({'status': 'success', 'data': text})
         else:
             response_text = json.dumps({'success': True})
 
@@ -52,7 +61,7 @@ class Process(MessageServiceServicer):
 
     def _send_message_successor(self, message: dict):
         if self.tail:
-            return json.dumps({"success": True})
+            return json.dumps({"data": {"success": True}})
         json_message = json.dumps(message)
         with grpc.insecure_channel(f'localhost:{self.successor["port"]}') as channel:
             stub = MessageServiceStub(channel)

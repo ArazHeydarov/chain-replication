@@ -18,6 +18,7 @@ class Master(MessageServiceServicer):
         self.head = None
         self.tail = None
         self.operations = []
+        self.completed_operations = {}
 
     def GetMessage(self, request, context):
         try:
@@ -51,12 +52,14 @@ class Master(MessageServiceServicer):
                     message += f" -> {self.chain[i]['name']} -> "
                 message += f"{self.tail['name']}(Tail)"
 
-            elif command in ['write_operation', 'read_operation']:
+            elif command in ['write_operation', 'read_operation', 'list_books']:
+                operation_id = uuid.uuid4().hex
+                message['id'] = operation_id
                 self.operations.append(message)
+                while operation_id not in self.completed_operations:
+                    time.sleep(0.5)
+                message = self.completed_operations[operation_id]
 
-            elif command == 'list_books':
-                response = self._send_message_process(self.tail['port'], message)
-                message = json.loads(response.text)['data']
             else:
                 raise Exception("No such command is found in master")
         except Exception as e:
@@ -83,14 +86,19 @@ class Master(MessageServiceServicer):
         server.add_insecure_port(f'[::]:{self.port}')
         server.start()
         print(f'Server started on port {self.port}...')
+
         while True:
             time.sleep(0.5)
             try:
                 operation = self.operations.pop(0)
                 if operation['command'] == 'write_operation':
-                    self._send_message_process(self.head['port'], operation)
-                elif operation['command'] == 'read_operation':
-                    pass
+                    response = self._send_message_process(self.head['port'], operation)
+                    message = json.loads(response.text)['data']
+                    self.completed_operations[operation['id']] = message
+                elif operation['command'] in ['read_operation', 'list_books']:
+                    response = self._send_message_process(self.tail['port'], operation)
+                    message = json.loads(response.text)['data']
+                    self.completed_operations[operation['id']] = message
             except IndexError:
                 pass
 

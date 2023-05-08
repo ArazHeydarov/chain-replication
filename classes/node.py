@@ -55,6 +55,12 @@ class Node:
             response = self._send_command_to_master(command='list_books')
             print(response['message'])
 
+        elif 'Read-operation' in command:
+            _, book_name = command.split(" ", 1)
+            book_name = book_name[1:-1]
+            response = self._send_command_to_master(command='read_operation', data={'name': book_name})
+            print(response['message'])
+
         elif command in ['exit', 'quit']:
             sys.exit(0)
 
