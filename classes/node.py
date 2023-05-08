@@ -37,6 +37,7 @@ class Node:
             self.processes.append(new_process)
 
     def _kill_all_process(self):
+        self._send_command_to_master(command=f"remove_node {self.name}")
         for ps in self.processes:
             ps.terminate()
 
@@ -48,5 +49,6 @@ class Node:
 
     def __del__(self):
         self._kill_all_process()
+
         if self.master_channel:
             self.master_channel.close()

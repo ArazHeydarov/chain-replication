@@ -18,10 +18,13 @@ class Master(MessageServiceServicer):
             print(message)
             if message['command'] == 'register_process':
                 self.process.append(message['data'])
-            if message['command'] == 'list_processes':
+            elif message['command'] == 'list_processes':
                 print(self.process)
-            if message['command'] == 'check_alive_all_processes':
+            elif message['command'] == 'check_alive_all_processes':
                 self._check_process()
+            elif 'remove_node' in message['command']:
+                cmd, node_name = message['command'].split()
+                self.process = [ps for ps in self.process if node_name not in ps['name']]
         except Exception as e:
             print(f"Message received with error {request.text} with {e}")
         return Message(text="received")
