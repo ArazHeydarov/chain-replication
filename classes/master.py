@@ -17,6 +17,7 @@ class Master(MessageServiceServicer):
         self.chain_created = False
         self.head = None
         self.tail = None
+        self.operations = []
 
     def GetMessage(self, request, context):
         try:
@@ -49,6 +50,9 @@ class Master(MessageServiceServicer):
                 for i in range(1, len(self.chain)-1):
                     message += f" -> {self.chain[i]['name']} -> "
                 message += f"{self.tail['name']}(Tail)"
+
+            elif command in ['write_operation', 'read_operation']:
+                self.operations.append(message)
             else:
                 raise Exception("No such command is found in master")
         except Exception as e:
@@ -76,11 +80,18 @@ class Master(MessageServiceServicer):
         server.start()
         print(f'Server started on port {self.port}...')
         while True:
-            time.sleep(5)
+            time.sleep(0.5)
+            try:
+                operation = self.operations.pop(0)
+                if operation['command'] == 'write_operation':
+                    self._send_message_process(self.head['port'], operation)
+                elif operation['command'] == 'read_operation':
+                    pass
+            except IndexError:
+                pass
 
     def _create_chain(self):
         self.chain = random.sample(self.process, len(self.process))
-        print("Chain", self.chain)
         self.head = self.chain[0]
         self.tail = self.chain[-1]
         # Assign head

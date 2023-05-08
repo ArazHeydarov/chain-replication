@@ -15,12 +15,46 @@ class Process(MessageServiceServicer):
         self.tail = None
         self.predecessor = None
         self.successor = None
+        self.data = {}
 
     def GetMessage(self, request, context):
         message = json.loads(request.text)
+        print(self.name, message)
         command = message['command']
-        # print(self.name, message)
-        return Message(text="received")
+        if command == 'assign':
+            data = message['data']
+            self.head = data.get('head')
+            self.tail = data.get('tail')
+            self.successor = data.get('successor')
+            self.predecessor = data.get('predecessor')
+            response_text = json.dumps({'success': True})
+
+        elif command == 'write_operation':
+            name = message['data']['name']
+            price = message['data']['price']
+            self.data[name] = (price, "dirty")
+
+            response_text = self._send_message_successor(message)
+            response_json = json.loads(response_text)
+            if response_json.get('success'):
+                self.data[name] = (price, "clean")
+            else:
+                del self.data[name]
+        else:
+            response_text = json.dumps({'success': True})
+
+        return Message(text=response_text)
+
+    def _send_message_successor(self, message: dict):
+        if self.tail:
+            return json.dumps({"success": True})
+        json_message = json.dumps(message)
+        with grpc.insecure_channel(f'localhost:{self.successor["port"]}') as channel:
+            stub = MessageServiceStub(channel)
+            request = Message(text=json_message)
+            response = stub.GetMessage(request)
+            channel.close()
+        return response.text
 
     def start_server(self):
         self._register_on_master()

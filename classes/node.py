@@ -22,7 +22,6 @@ class Node:
         self.master_stub = stub
 
     def execute_command(self, command: str) -> None:
-        print(command)
         if 'Local-store-ps' in command:
             cmd, number_of_ps = command.split()
             self._create_process(int(number_of_ps))
@@ -49,6 +48,8 @@ class Node:
             name, price = book_details.rsplit(" ", 1)
             name = name[1:-2]
             price = price.replace(",", '.')
+            self._send_command_to_master(command='write_operation',
+                                         data={"name": name, "price": price})
 
         elif command in ['exit', 'quit']:
             sys.exit(0)
@@ -68,9 +69,10 @@ class Node:
             for ps in self.processes:
                 ps.terminate()
 
-    def _send_command_to_master(self, command: str):
+    def _send_command_to_master(self, command: str, data: dict = None):
         request = Message(text=json.dumps({
             "command": command,
+            "data": data
         }))
         response = self.master_stub.GetMessage(request)
         response = json.loads(response.text)
