@@ -5,6 +5,7 @@ from concurrent import futures
 from chain_pb2_grpc import MessageServiceServicer, add_MessageServiceServicer_to_server, MessageServiceStub
 from chain_pb2 import Message
 
+
 class Master(MessageServiceServicer):
     def __init__(self):
         self.id = uuid.uuid4().hex
@@ -31,7 +32,7 @@ class Master(MessageServiceServicer):
             with grpc.insecure_channel(f'localhost:{ps["port"]}') as channel:
                 stub = MessageServiceStub(channel)
                 request = Message(text=json.dumps({
-                    "command": 'list_processes',
+                    "command": 'alive',
                 }))
                 response = stub.GetMessage(request)
                 channel.close()

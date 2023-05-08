@@ -9,6 +9,15 @@ class Node:
         self.name = name
         self.processes = []
         self.master_port = "8000"
+        self.master_channel = None
+        self.master_stub = None
+        self._initialize_master_conn()
+
+    def _initialize_master_conn(self):
+        channel = grpc.insecure_channel(f'localhost:{self.master_port}')
+        self.master_channel = channel
+        stub = MessageServiceStub(channel)
+        self.master_stub = stub
 
     def execute_command(self, command: str) -> None:
         if 'Local-store-ps' in command:
@@ -16,8 +25,10 @@ class Node:
             self._create_process(int(number_of_ps))
         if command == 'kill_all':
             self._kill_all_process()
-        if command == 'list_global_processes':
-            self._list_global_processes()
+        elif command == 'list_global_processes':
+            self._send_command_to_master(command='list_processes')
+        elif command == 'check_alive_all_processes':
+            self._send_command_to_master(command=command)
 
     def _create_process(self, number_of_process: int) -> None:
         for i in range(number_of_process):
@@ -29,14 +40,13 @@ class Node:
         for ps in self.processes:
             ps.terminate()
 
-    def _list_global_processes(self):
-        with grpc.insecure_channel(f'localhost:{self.master_port}') as channel:
-            stub = MessageServiceStub(channel)
-            request = Message(text=json.dumps({
-                "command": 'list_processes',
-            }))
-            response = stub.GetMessage(request)
-            channel.close()
+    def _send_command_to_master(self, command: str):
+        request = Message(text=json.dumps({
+            "command": command,
+        }))
+        response = self.master_stub.GetMessage(request)
 
     def __del__(self):
         self._kill_all_process()
+        if self.master_channel:
+            self.master_channel.close()
