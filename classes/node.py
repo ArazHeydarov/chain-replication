@@ -61,6 +61,10 @@ class Node:
             response = self._send_command_to_master(command='read_operation', data={'name': book_name})
             print(response['message'])
 
+        elif 'Time-out' in command:
+            _, delay = command.split()
+            self._send_command_to_master(command='set_delay', data={'delay': int(delay)})
+
         elif command in ['exit', 'quit']:
             sys.exit(0)
 

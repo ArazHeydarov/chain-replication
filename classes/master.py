@@ -52,7 +52,7 @@ class Master(MessageServiceServicer):
                     message += f" -> {self.chain[i]['name']} -> "
                 message += f"{self.tail['name']}(Tail)"
 
-            elif command in ['write_operation', 'read_operation', 'list_books']:
+            elif command in ['write_operation', 'read_operation', 'list_books', 'set_delay']:
                 operation_id = uuid.uuid4().hex
                 message['id'] = operation_id
                 self.operations.append(message)
@@ -91,7 +91,7 @@ class Master(MessageServiceServicer):
             time.sleep(0.5)
             try:
                 operation = self.operations.pop(0)
-                if operation['command'] == 'write_operation':
+                if operation['command'] in ['write_operation', 'set_delay']:
                     response = self._send_message_process(self.head['port'], operation)
                     message = json.loads(response.text)['data']
                     self.completed_operations[operation['id']] = message

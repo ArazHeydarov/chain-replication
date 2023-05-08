@@ -1,3 +1,5 @@
+import time
+
 import grpc
 import json
 import socket
@@ -16,6 +18,7 @@ class Process(MessageServiceServicer):
         self.predecessor = None
         self.successor = None
         self.data = {}
+        self.delay = 0
 
     def GetMessage(self, request, context):
         message = json.loads(request.text)
@@ -30,6 +33,7 @@ class Process(MessageServiceServicer):
             response_text = json.dumps({'success': True})
 
         elif command == 'write_operation':
+            time.sleep(self.delay)
             name = message['data']['name']
             price = message['data']['price']
             self.data[name] = (price, "dirty")
@@ -54,6 +58,10 @@ class Process(MessageServiceServicer):
             else:
                 text = "Not yet in the stock"
             response_text = json.dumps({'status': 'success', 'data': text})
+        elif command == 'set_delay':
+            self.delay = message['data']['delay']
+            self._send_message_successor(message)
+            response_text = json.dumps({'data': 'success'})
         else:
             response_text = json.dumps({'success': True})
 
