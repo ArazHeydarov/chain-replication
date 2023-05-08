@@ -22,22 +22,37 @@ class Node:
         self.master_stub = stub
 
     def execute_command(self, command: str) -> None:
+        print(command)
         if 'Local-store-ps' in command:
             cmd, number_of_ps = command.split()
             self._create_process(int(number_of_ps))
-        if command == 'kill_all':
+
+        elif command == 'kill_all':
             self._kill_all_process()
+
         elif command == 'list_global_processes':
             self._send_command_to_master(command='list_processes')
+
         elif command == 'check_alive_all_processes':
             self._send_command_to_master(command=command)
+
         elif command == 'Create-chain':
             self._send_command_to_master(command="create_chain")
+
         elif command == 'List-chain':
             response = self._send_command_to_master(command="list_chain")
             print(response['message'])
+
+        elif 'Write-operation' in command:
+            _, book_details = command.split(" ", 1)
+            book_details = book_details[1:-1]
+            name, price = book_details.rsplit(" ", 1)
+            name = name[1:-2]
+            price = price.replace(",", '.')
+
         elif command in ['exit', 'quit']:
             sys.exit(0)
+
         else:
             print("No such command is found in node")
 
@@ -48,9 +63,10 @@ class Node:
             self.processes.append(new_process)
 
     def _kill_all_process(self):
-        self._send_command_to_master(command=f"remove_node {self.name}")
-        for ps in self.processes:
-            ps.terminate()
+        if self.processes:
+            self._send_command_to_master(command=f"remove_node {self.name}")
+            for ps in self.processes:
+                ps.terminate()
 
     def _send_command_to_master(self, command: str):
         request = Message(text=json.dumps({

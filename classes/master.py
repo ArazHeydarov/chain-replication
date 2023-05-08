@@ -1,4 +1,5 @@
 import random
+import time
 import uuid
 import grpc
 import json
@@ -40,7 +41,7 @@ class Master(MessageServiceServicer):
                     raise Exception("Chain has already been created")
                 else:
                     self._create_chain()
-
+                    self.chain_created = True
             elif command == 'list_chain':
                 if not self.chain_created:
                     raise Exception("Chain hasn't been created yet. Please create it first with 'Create-chain'")
@@ -74,7 +75,8 @@ class Master(MessageServiceServicer):
         server.add_insecure_port(f'[::]:{self.port}')
         server.start()
         print(f'Server started on port {self.port}...')
-        server.wait_for_termination()
+        while True:
+            time.sleep(5)
 
     def _create_chain(self):
         self.chain = random.sample(self.process, len(self.process))
